@@ -4,4 +4,5 @@ project(Repomngr)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(${PROJECT_NAME} main.c)
+file(GLOB SOURCES "*.c")
+add_executable(${PROJECT_NAME} ${SOURCES})

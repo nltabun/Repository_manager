@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include "fileact.h"
 
 #define ALIAS_MAX 130
 #define LINK_MAX 256
 #define LINE_MAX (ALIAS_MAX + LINK_MAX + 1)
 #define FILE_NAME_MAX 96
+#define DEFAULT_FILE_NAME "repositories.csv"
 
 typedef struct RepositoryEntry
 {
@@ -16,10 +18,11 @@ typedef struct RepositoryEntry
     struct RepositoryEntry* next;
 } RepositoryEntry;
 
-// TODO: maybe move these 3 to another file
+/* TODO: maybe move these 3 to another file
 bool does_file_exist(FILE *file_ptr, const char *file_name);
 bool create_file(FILE *file_ptr, const char *file_name);
 bool write_to_file(FILE *file_ptr, const char *fmt, ...);
+*/
 
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link);
 void show_link(RepositoryEntry *head, const char *alias);
@@ -32,7 +35,7 @@ void print_commands();
 int main(int argc, char const *argv[])
 {
     FILE *file_ptr;
-    char file_name[FILE_NAME_MAX] = "repositories.csv";
+    char file_name[FILE_NAME_MAX] = DEFAULT_FILE_NAME;
     const char format[] = "%s,%s\n";
     RepositoryEntry *head = NULL;
     char new_alias[ALIAS_MAX] = "GitHub";
@@ -41,10 +44,10 @@ int main(int argc, char const *argv[])
     printf("LINE MAX: %d\n", LINE_MAX);
 
     // Check if file exists and if it doesn't, try to create it
-    if (!(does_file_exist(file_ptr, file_name)))
+    if (!(does_file_exist(file_name)))
     {
         printf("File %s doesn't seem to exist. Attempting to create it..\n", file_name);
-        if (create_file(file_ptr, file_name))
+        if (create_file(file_name))
         {
             printf("Successfully created file %s\n", file_name);
         }
@@ -68,15 +71,8 @@ int main(int argc, char const *argv[])
         printf("Failed to add new entry: %s\n", new_alias);
     }
 
-    // Test write to file
-    file_ptr = fopen(file_name, "w");
-    if (file_ptr == NULL)
-    {
-        printf("Failed to open file for writing.\n");
-        return 4;
-    }
-    
-    if (write_to_file(file_ptr, format, new_alias, new_link))
+    // Test write to file 
+    if (write_to_file(file_name, format, new_alias, new_link) > 0)
     {
         printf("Successfully wrote entry to file.\n");
     }
@@ -84,13 +80,12 @@ int main(int argc, char const *argv[])
     {
         printf("Failed to write entry to file.\n");
     }
-
-    fclose(file_ptr);
     
 
     return 0;
 }
 
+/*
 bool does_file_exist(FILE *file_ptr, const char *file_name)
 {
     file_ptr = fopen(file_name, "r");
@@ -128,6 +123,7 @@ bool write_to_file(FILE *file_ptr, const char *fmt, ...)
     
     return result;
 }
+*/
 
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
 {
