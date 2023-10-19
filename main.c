@@ -24,6 +24,7 @@ typedef struct RepositoryEntry
     struct RepositoryEntry *next;
 } RepositoryEntry;
 
+bool init_program(FILE file_ptr, const char *file_name, bool *saved);
 bool read_entry(FILE *file_ptr, const char *alias, const char *link);
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link);
 int write_entries(FILE *file_ptr, RepositoryEntry *entry);
@@ -53,7 +54,7 @@ int main(int argc, char const *argv[])
     if (!(does_file_exist(file_ptr, file_name)))
     {
         printf("File %s doesn't seem to exist. Attempting to create it..\n", file_name);
-        if (create_file(file_ptr, file_name, ENTRY_FMT, HEADER))
+        if (create_file(file_ptr, file_name, ENTRY_FMT))
         {
             printf("Successfully created file %s\n", file_name);
             changes_saved = true;
@@ -183,6 +184,12 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
+bool init_program(FILE file_ptr, const char *file_name, bool *saved)
+{
+
+
+    return true;
+}
 // Read entry from file and add it to list
 // TODO: add rigorous checking for invalid readings.
 bool read_entry(FILE *file_ptr, const char *alias, const char *link)
