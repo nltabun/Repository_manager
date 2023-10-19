@@ -49,7 +49,7 @@ int main(int argc, char const *argv[])
     int command_args;
     bool changes_saved;
 
-    // TODO? func ? init?
+    // Init starts
     // Check if file exists and if it doesn't, try to create it
     if (!(does_file_exist(file_ptr, file_name)))
     {
@@ -79,17 +79,20 @@ int main(int argc, char const *argv[])
         printf("Missing correct header.\n");
     }
 
-    // Read entries TODO: make more rigid, stops if bad line encountered (while feof, if read_entry?)
-    while (read_entry(file_ptr, user_alias, user_link))
+    // Read entries from file and populate list
+    while (!feof(file_ptr))
     {
-        if (!(add_new_entry(&head, user_alias, user_link)))
+        if (read_entry(file_ptr, user_alias, user_link))
         {
-            printf("Failed to add entry\n");
+            if (!(add_new_entry(&head, user_alias, user_link)))
+            {
+                printf("Failed to add entry\n");
+            }
         }
     }
 
     fclose(file_ptr);
-    // ?TODO
+    // Init ends
 
     printf("Welcome to REPOSITORY MANAGER\nType \"help\" to list available commands\n");
     // Main program loop
@@ -151,7 +154,6 @@ int main(int argc, char const *argv[])
                 {
                     printf("Missing required arguments for command \"add\".\n");
                 }
-                
             }
             else if (strcmp(command, "show") == 0)
             {
@@ -187,7 +189,6 @@ int main(int argc, char const *argv[])
 
 bool init_program(FILE file_ptr, const char *file_name, bool *saved)
 {
-
 
     return true;
 }
