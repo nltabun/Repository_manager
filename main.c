@@ -15,7 +15,7 @@
 #define HEADER "Alias,Link"
 #define ENTRY_FMT "%s,%s"
 #define ENTRY_SCAN_FMT "%[^,],%s"
-#define CMD_FMT "%s %s %s"
+#define CMD_FMT "%s %s %s %s"
 
 typedef struct RepositoryEntry
 {
