@@ -24,7 +24,6 @@ typedef struct RepositoryEntry
     struct RepositoryEntry *next;
 } RepositoryEntry;
 
-bool init_program(FILE file_ptr, const char *file_name, bool *saved);
 bool read_entry(FILE *file_ptr, const char *alias, const char *link);
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link);
 int write_entries(FILE *file_ptr, RepositoryEntry *entry);
@@ -69,24 +68,24 @@ int main(int argc, char const *argv[])
     {
         printf("File %s found.\n", file_name);
         changes_saved = true;
-    }
 
-    file_ptr = fopen(file_name, "r");
+        file_ptr = fopen(file_name, "r");
 
-    // Check header TODO: Handle somehow
-    if (!(verify_line_from_file(file_ptr, HEADER, LINE_MAX)))
-    {
-        printf("Missing correct header.\n");
-    }
-
-    // Read entries from file and populate list
-    while (!feof(file_ptr))
-    {
-        if (read_entry(file_ptr, user_alias, user_link))
+        // Check header TODO: Handle somehow
+        if (!(verify_line_from_file(file_ptr, HEADER, LINE_MAX)))
         {
-            if (!(add_new_entry(&head, user_alias, user_link)))
+            printf("Missing correct header.\n");
+        }
+
+        // Read entries from file and populate list
+        while (!feof(file_ptr))
+        {
+            if (read_entry(file_ptr, user_alias, user_link))
             {
-                printf("Failed to add entry\n");
+                if (!(add_new_entry(&head, user_alias, user_link)))
+                {
+                    printf("Failed to add entry\n");
+                }
             }
         }
     }
@@ -187,11 +186,7 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-bool init_program(FILE file_ptr, const char *file_name, bool *saved)
-{
 
-    return true;
-}
 // Read entry from file and add it to list
 // TODO: add rigorous checking for invalid readings.
 bool read_entry(FILE *file_ptr, const char *alias, const char *link)
