@@ -60,7 +60,7 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            printf("Failed to create file %s. Can not continue. Exiting..\n", file_name);
+            fprintf(stderr, "Failed to create file %s. Can not continue. Exiting..\n", file_name);
             return EXIT_FAILURE;
         }
     }
@@ -74,7 +74,8 @@ int main(int argc, char const *argv[])
         // Check header TODO: Handle somehow
         if (!(verify_line_from_file(file_ptr, HEADER, LINE_MAX)))
         {
-            printf("Missing correct header.\n");
+            fprintf(stderr, "Missing correct header.\n");
+            rewind(file_ptr);
         }
 
         // Read entries from file and populate list
@@ -84,7 +85,7 @@ int main(int argc, char const *argv[])
             {
                 if (!(add_new_entry(&head, user_alias, user_link)))
                 {
-                    printf("Failed to add entry\n");
+                    fprintf(stderr, "Failed to add entry\n");
                 }
             }
         }
