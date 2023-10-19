@@ -26,13 +26,13 @@ typedef struct RepositoryEntry
 
 bool read_entry(FILE *file_ptr, const char *alias, const char *link);
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link);
+bool delete_entry(RepositoryEntry *head, const char *alias);
 int write_entries(FILE *file_ptr, RepositoryEntry *entry);
 void show_link(RepositoryEntry *head, const char *alias);
 void print_all_aliases(RepositoryEntry *head);
-void delete_entry(RepositoryEntry *head, const char *alias);
 void free_list(RepositoryEntry *head);
 void print_commands();
-bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *user_alias, char *user_link);
+bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *alias, char *link);
 
 int main(int argc, char const *argv[])
 {
@@ -42,11 +42,12 @@ int main(int argc, char const *argv[])
     bool quit = false;
     RepositoryEntry *head = NULL;
     char user_input[INPUT_MAX];
-    char user_alias[ALIAS_MAX];
-    char user_link[LINK_MAX];
+    char n_alias[ALIAS_MAX];
+    char n_link[LINK_MAX];
     char command[CMD_MAX];
     int command_args;
     bool changes_saved;
+    int entry_w;
 
     // Init starts
     // Check if file exists and if it doesn't, try to create it
@@ -71,19 +72,20 @@ int main(int argc, char const *argv[])
 
         file_ptr = fopen(file_name, "r");
 
-        // Check header TODO: Handle somehow
+        // Check header TODO: Handle better
         if (!(verify_line_from_file(file_ptr, HEADER, LINE_MAX)))
         {
             fprintf(stderr, "Missing correct header.\n");
+            changes_saved = false; // So that header gets added even if no new entries get added/removed.
             rewind(file_ptr);
         }
 
         // Read entries from file and populate list
         while (!feof(file_ptr))
         {
-            if (read_entry(file_ptr, user_alias, user_link))
+            if (read_entry(file_ptr, n_alias, n_link))
             {
-                if (!(add_new_entry(&head, user_alias, user_link)))
+                if (!(add_new_entry(&head, n_alias, n_link)))
                 {
                     fprintf(stderr, "Failed to add entry\n");
                 }
@@ -103,9 +105,9 @@ int main(int argc, char const *argv[])
         {
             memset(command, 0, sizeof(command)); // Clear command string
             user_input[strcspn(user_input, "\n")] = 0;
-            command_args = sscanf(user_input, CMD_FMT, command, user_alias, user_link);
+            command_args = sscanf(user_input, CMD_FMT, command, n_alias, n_link);
             printf("Args: %d\n", command_args);
-            printf("Cmd: %s, Alias: %s, Link: %s\n", command, user_alias, user_link);
+            printf("Cmd: %s, Alias: %s, Link: %s\n", command, n_alias, n_link);
 
             if (strcmp(command, "quit") == 0)
             {
@@ -127,7 +129,7 @@ int main(int argc, char const *argv[])
                         printf("Failed to write header to file.\n");
                     }
 
-                    int entry_w = write_entries(file_ptr, head);
+                    entry_w = write_entries(file_ptr, head);
                     printf("Wrote %d entries to file.\n", entry_w);
 
                     fclose(file_ptr);
@@ -140,7 +142,7 @@ int main(int argc, char const *argv[])
             {
                 if (command_args == 3)
                 {
-                    if (!(add_new_entry(&head, user_alias, user_link)))
+                    if (!(add_new_entry(&head, n_alias, n_link)))
                     {
                         printf("Failed to add entry\n");
                     }
@@ -157,7 +159,7 @@ int main(int argc, char const *argv[])
             }
             else if (strcmp(command, "show") == 0)
             {
-                /* code */
+                show_link(head, n_alias);
             }
             else if (strcmp(command, "list") == 0)
             {
@@ -179,7 +181,7 @@ int main(int argc, char const *argv[])
     }
 
     // Run test
-    // test(file_ptr, head, file_name, user_alias, user_link);
+    // test(file_ptr, head, file_name, alias, link);
 
     // Free memory
     free_list(head);
@@ -201,27 +203,6 @@ bool read_entry(FILE *file_ptr, const char *alias, const char *link)
         return false;
 
     return true;
-}
-
-int write_entries(FILE *file_ptr, RepositoryEntry *entry)
-{
-    RepositoryEntry *current = entry;
-    int count = 0;
-
-    while (current != NULL)
-    {
-        if (write_to_file(file_ptr, ENTRY_FMT, current->alias, current->link) == 1)
-        {
-            count++;
-        }
-        else
-        {
-            printf("Failed to write entry to file.\n");
-        }
-        current = current->next;
-    }
-
-    return count;
 }
 
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
@@ -257,6 +238,55 @@ bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
     return true;
 }
 
+void show_link(RepositoryEntry *head, const char *alias)
+{
+    RepositoryEntry *current = head;
+    if (current == NULL)
+    {
+        printf("Entry list is empty.\n");
+    }
+    
+    while (current != NULL)
+    {
+        if (strcmp(current->alias, alias) == 0)
+        {
+            printf("%s: %s\n", alias, current->link);
+            return;
+        }
+        current = current->next;
+    }
+    
+    printf("Did not find \"%s\". Make sure your spelling is correct.\n");
+}
+
+bool delete_entry(RepositoryEntry *head, const char *alias)
+{
+
+
+    return true;
+}
+
+int write_entries(FILE *file_ptr, RepositoryEntry *entry)
+{
+    RepositoryEntry *current = entry;
+    int count = 0;
+
+    while (current != NULL)
+    {
+        if (write_to_file(file_ptr, ENTRY_FMT, current->alias, current->link) == 1)
+        {
+            count++;
+        }
+        else
+        {
+            printf("Failed to write entry to file.\n");
+        }
+        current = current->next;
+    }
+
+    return count;
+}
+
 void print_all_aliases(RepositoryEntry *head)
 {
     RepositoryEntry *current = head;
@@ -280,19 +310,19 @@ void free_list(RepositoryEntry *head)
     }
 }
 
-bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *user_alias, char *user_link)
+bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *alias, char *link)
 {
     // Test print aliases
     print_all_aliases(head);
 
     // Test add
-    if (add_new_entry(&head, user_alias, user_link))
+    if (add_new_entry(&head, alias, link))
     {
-        printf("Successfully added new entry: %s|%s\n", user_alias, user_link);
+        printf("Successfully added new entry: %s|%s\n", alias, link);
     }
     else
     {
-        printf("Failed to add new entry: %s|%s\n", user_alias, user_link);
+        printf("Failed to add new entry: %s|%s\n", alias, link);
     }
 
     // Test print aliases
