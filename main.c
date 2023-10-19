@@ -26,7 +26,7 @@ typedef struct RepositoryEntry
 
 bool read_entry(FILE *file_ptr, const char *alias, const char *link);
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link);
-bool delete_entry(RepositoryEntry *head, const char *alias);
+bool delete_entry(RepositoryEntry **head, const char *alias);
 int write_entries(FILE *file_ptr, RepositoryEntry *entry);
 void show_link(RepositoryEntry *head, const char *alias);
 void print_all_aliases(RepositoryEntry *head);
@@ -197,11 +197,39 @@ int main(int argc, char const *argv[])
             }
             else if (strcmp(command, "delete") == 0)
             {
-                /* code */
+                if (command_args == 2)
+                {
+                    if (delete_entry(&head, n_alias))
+                    {
+                        printf("Deleted: %s\n", n_alias);
+                        changes_saved = false;
+                    }
+                    else
+                    {
+                        printf("Did not find \"%s\". Make sure your spelling is correct.\n", n_alias);
+                    }
+                }
+                else if (command_args < 2)
+                {
+                    printf("Too few arguments for command \"delete\".\n");
+                }
+                else
+                {
+                    printf("Too many arguments for command \"delete\".\n");
+                }
             }
             else if (strcmp(command, "help") == 0)
             {
-                /* code */
+                if (command_args == 1)
+                {
+                    print_commands();
+                }
+                else
+                {
+                    printf("Too many arguments for command \"help\".\n");
+                }
+                
+                
             }
             else
             {
@@ -267,6 +295,39 @@ bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
     return true;
 }
 
+bool delete_entry(RepositoryEntry **head, const char *alias)
+{
+    if (!head || !(*head))
+        return false;
+
+    RepositoryEntry *temp = *head;
+    RepositoryEntry *prev = NULL;
+
+    while (strcmp(temp->alias, alias) != 0 && temp->next != NULL)
+    {
+        prev = temp;
+        temp = temp->next;
+    }
+
+    if (strcmp(temp->alias, alias) == 0)
+    {
+        if (prev)
+        {
+            prev->next = temp->next;
+        }
+        else
+        {
+            *head = temp->next;
+        }
+
+        free(temp);
+
+        return true;
+    }
+    
+    return false;
+}
+
 void show_link(RepositoryEntry *head, const char *alias)
 {
     RepositoryEntry *current = head;
@@ -286,12 +347,6 @@ void show_link(RepositoryEntry *head, const char *alias)
     }
 
     printf("Did not find \"%s\". Make sure your spelling is correct.\n");
-}
-
-bool delete_entry(RepositoryEntry *head, const char *alias)
-{
-
-    return true;
 }
 
 int write_entries(FILE *file_ptr, RepositoryEntry *entry)
@@ -336,6 +391,19 @@ void free_list(RepositoryEntry *head)
         current = current->next;
         free(temp);
     }
+}
+
+void print_commands()
+{
+    printf(
+        "Available commands:\n"
+        "- add <alias> <repository link>\n"
+        "- show <alias>|all\n"
+        "- list\n"
+        "- delete <alias>\n"
+        "- help\n"
+        "- quit\n"
+    );
 }
 
 bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *alias, char *link)
