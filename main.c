@@ -32,7 +32,7 @@ void print_all_aliases(RepositoryEntry *head);
 void delete_entry(RepositoryEntry *head, const char *alias);
 void free_list(RepositoryEntry *head);
 void print_commands();
-bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *new_alias, char *new_link);
+bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *user_alias, char *user_link);
 
 int main(int argc, char const *argv[])
 {
@@ -42,8 +42,8 @@ int main(int argc, char const *argv[])
     bool quit = false;
     RepositoryEntry *head = NULL;
     char user_input[INPUT_MAX];
-    char new_alias[ALIAS_MAX];
-    char new_link[LINK_MAX];
+    char user_alias[ALIAS_MAX];
+    char user_link[LINK_MAX];
     char command[CMD_MAX];
     int command_args;
     bool changes_saved;
@@ -79,9 +79,9 @@ int main(int argc, char const *argv[])
     }
 
     // Read entries TODO: make more rigid, stops if bad line encountered (while feof, if read_entry?)
-    while (read_entry(file_ptr, new_alias, new_link))
+    while (read_entry(file_ptr, user_alias, user_link))
     {
-        if (!(add_new_entry(&head, new_alias, new_link)))
+        if (!(add_new_entry(&head, user_alias, user_link)))
         {
             printf("Failed to add entry\n");
         }
@@ -98,9 +98,9 @@ int main(int argc, char const *argv[])
         if (fgets(user_input, sizeof(user_input), stdin) != NULL) // TODO: validation in function
         {
             user_input[strcspn(user_input, "\n")] = 0;
-            command_args = sscanf(user_input, CMD_FMT, command, new_alias, new_link);
+            command_args = sscanf(user_input, CMD_FMT, command, user_alias, user_link);
             printf("Args: %d\n", command_args);
-            printf("Cmd: %s, Alias: %s, Link: %s\n", command, new_alias, new_link);
+            printf("Cmd: %s, Alias: %s, Link: %s\n", command, user_alias, user_link);
 
             if (strcmp(command, "quit") == 0)
             {
@@ -133,15 +133,23 @@ int main(int argc, char const *argv[])
             }
             else if (strcmp(command, "add") == 0)
             {
-                if (!(add_new_entry(&head, new_alias, new_link)))
+                if (command_args == 3)
                 {
-                    printf("Failed to add entry\n");
+                    if (!(add_new_entry(&head, user_alias, user_link)))
+                    {
+                        printf("Failed to add entry\n");
+                    }
+                    else
+                    {
+                        printf("Successfully added entry.\n");
+                        changes_saved = false;
+                    }
                 }
                 else
                 {
-                    printf("Successfully added entry.\n");
-                    changes_saved = false;
+                    printf("Missing required arguments for command \"add\".\n");
                 }
+                
             }
             else if (strcmp(command, "show") == 0)
             {
@@ -167,7 +175,7 @@ int main(int argc, char const *argv[])
     }
 
     // Run test
-    // test(file_ptr, head, file_name, new_alias, new_link);
+    // test(file_ptr, head, file_name, user_alias, user_link);
 
     // Free memory
     free_list(head);
@@ -267,19 +275,19 @@ void free_list(RepositoryEntry *head)
     }
 }
 
-bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *new_alias, char *new_link)
+bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *user_alias, char *user_link)
 {
     // Test print aliases
     print_all_aliases(head);
 
     // Test add
-    if (add_new_entry(&head, new_alias, new_link))
+    if (add_new_entry(&head, user_alias, user_link))
     {
-        printf("Successfully added new entry: %s|%s\n", new_alias, new_link);
+        printf("Successfully added new entry: %s|%s\n", user_alias, user_link);
     }
     else
     {
-        printf("Failed to add new entry: %s|%s\n", new_alias, new_link);
+        printf("Failed to add new entry: %s|%s\n", user_alias, user_link);
     }
 
     // Test print aliases
