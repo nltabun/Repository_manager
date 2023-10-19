@@ -98,6 +98,7 @@ int main(int argc, char const *argv[])
         printf(">");
         if (fgets(user_input, sizeof(user_input), stdin) != NULL) // TODO: validation in function
         {
+            memset(command, 0, sizeof(command)); // Clear command string
             user_input[strcspn(user_input, "\n")] = 0;
             command_args = sscanf(user_input, CMD_FMT, command, user_alias, user_link);
             printf("Args: %d\n", command_args);
