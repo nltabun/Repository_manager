@@ -111,32 +111,40 @@ int main(int argc, char const *argv[])
 
             if (strcmp(command, "quit") == 0)
             {
-                if (!changes_saved)
+                if (command_args == 1)
                 {
-                    file_ptr = fopen(file_name, "w");
-                    if (file_ptr == NULL)
+                    if (!changes_saved)
                     {
-                        printf("Failed to open file for writing.\n");
-                        return EXIT_FAILURE;
+
+                        file_ptr = fopen(file_name, "w");
+                        if (file_ptr == NULL)
+                        {
+                            printf("Failed to open file for writing.\n");
+                            return EXIT_FAILURE;
+                        }
+
+                        if (write_to_file(file_ptr, HEADER) == 1)
+                        {
+                            printf("Successfully wrote header to file.\n");
+                        }
+                        else
+                        {
+                            printf("Failed to write header to file.\n");
+                        }
+
+                        entry_w = write_entries(file_ptr, head);
+                        printf("Wrote %d entries to file.\n", entry_w);
+
+                        fclose(file_ptr);
                     }
 
-                    if (write_to_file(file_ptr, HEADER) == 1)
-                    {
-                        printf("Successfully wrote header to file.\n");
-                    }
-                    else
-                    {
-                        printf("Failed to write header to file.\n");
-                    }
-
-                    entry_w = write_entries(file_ptr, head);
-                    printf("Wrote %d entries to file.\n", entry_w);
-
-                    fclose(file_ptr);
+                    printf("Quitting..\n");
+                    quit = true;
                 }
-
-                printf("Quitting..\n");
-                quit = true;
+                else
+                {
+                    printf("Too many arguments for command \"quit\".\n");
+                }
             }
             else if (strcmp(command, "add") == 0)
             {
@@ -152,18 +160,40 @@ int main(int argc, char const *argv[])
                         changes_saved = false;
                     }
                 }
+                else if (command_args < 3)
+                {
+                    printf("Too few arguments for command \"add\".\n");
+                }
                 else
                 {
-                    printf("Missing required arguments for command \"add\".\n");
+                    printf("Too many arguments for command \"add\".\n");
                 }
             }
             else if (strcmp(command, "show") == 0)
             {
-                show_link(head, n_alias);
+                if (command_args == 2)
+                {
+                    show_link(head, n_alias);
+                }
+                else if (command_args < 2)
+                {
+                    printf("Too few arguments for command \"show\".\n");
+                }
+                else
+                {
+                    printf("Too many arguments for command \"show\".\n");
+                }
             }
             else if (strcmp(command, "list") == 0)
             {
-                print_all_aliases(head);
+                if (command_args == 1)
+                {
+                    print_all_aliases(head);
+                }
+                else
+                {
+                    printf("Too many arguments for command \"list\".\n");
+                }
             }
             else if (strcmp(command, "delete") == 0)
             {
@@ -188,7 +218,6 @@ int main(int argc, char const *argv[])
 
     return 0;
 }
-
 
 // Read entry from file and add it to list
 // TODO: add rigorous checking for invalid readings.
@@ -245,7 +274,7 @@ void show_link(RepositoryEntry *head, const char *alias)
     {
         printf("Entry list is empty.\n");
     }
-    
+
     while (current != NULL)
     {
         if (strcmp(current->alias, alias) == 0)
@@ -255,13 +284,12 @@ void show_link(RepositoryEntry *head, const char *alias)
         }
         current = current->next;
     }
-    
+
     printf("Did not find \"%s\". Make sure your spelling is correct.\n");
 }
 
 bool delete_entry(RepositoryEntry *head, const char *alias)
 {
-
 
     return true;
 }
