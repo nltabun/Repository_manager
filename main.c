@@ -16,13 +16,17 @@
 #define ENTRY_FMT "%s,%s"
 #define ENTRY_SCAN_FMT "%[^,],%s"
 
-enum Command {
+enum ExecuteCommand
+{
     QUIT = 1,
-    ADD,
-    SHOW,
-    LIST,
-    DELETE,
-    HELP
+    ADD = 2,
+    SHOW = 3,
+    LIST = 4,
+    DELETE = 5,
+    HELP = 6,
+    UNKNOWN = 0,
+    TOO_FEW_ARGS = -1,
+    TOO_MANY_ARGS = -2
 };
 
 typedef struct RepositoryEntry
@@ -39,6 +43,7 @@ int write_entries(FILE *file_ptr, RepositoryEntry *entry);
 int parse_input(char *input, char *command, char *alias, char *link);
 bool validate_arg_len(char *arg, int arg_type);
 bool validate_arg_count(char *command, int arg_count);
+int validate_command(char *command, int arg_count);
 void show_link(RepositoryEntry *head, const char *alias);
 void print_all_aliases(RepositoryEntry *head);
 void free_list(RepositoryEntry *head);
@@ -59,6 +64,7 @@ int main(int argc, char const *argv[])
     int command_args;
     bool changes_saved;
     int entry_w;
+    int execute_cmd;
 
     // Init starts
     // Check if file exists and if it doesn't, try to create it
@@ -119,94 +125,70 @@ int main(int argc, char const *argv[])
 
             if (command_args >= 0)
             {
-                if (strcmp(command, "quit") == 0)
+                execute_cmd = validate_command(command, command_args);
+
+                switch (execute_cmd)
                 {
-                    if (command_args == 0)
+                case QUIT:
+                    if (!changes_saved)
                     {
-                        if (!changes_saved)
+
+                        file_ptr = fopen(file_name, "w");
+                        if (file_ptr == NULL)
                         {
-
-                            file_ptr = fopen(file_name, "w");
-                            if (file_ptr == NULL)
-                            {
-                                fprintf(stderr, "Failed to open file for writing.\n");
-                                return EXIT_FAILURE; // TODO: Maybe not?
-                            }
-
-                            if (!(write_to_file(file_ptr, HEADER) == 1))
-                                fprintf(stderr, "Failed to write header to file.\n");
-
-                            entry_w = write_entries(file_ptr, head);
-                            printf("Wrote %d entries to file.\n", entry_w);
-
-                            fclose(file_ptr);
+                            fprintf(stderr, "Failed to open file for writing.\n");
+                            return EXIT_FAILURE; // TODO: Maybe not?
                         }
 
-                        printf("Quitting..\n");
-                        quit = true;
+                        if (!(write_to_file(file_ptr, HEADER) == 1))
+                            fprintf(stderr, "Failed to write header to file.\n");
+
+                        entry_w = write_entries(file_ptr, head);
+                        printf("Wrote %d entries to file.\n", entry_w);
+
+                        fclose(file_ptr);
                     }
+
+                    printf("Quitting..\n");
+                    quit = true;
+                    break;
+                case ADD:
+                    if (!(add_new_entry(&head, n_alias, n_link)))
+                        fprintf(stderr, "Failed to add entry\n");
                     else
-                        printf("Too many arguments for command \"%s\".\n", command);
-                }
-                else if (strcmp(command, "add") == 0)
-                {
-                    if (command_args == 2)
                     {
-                        if (!(add_new_entry(&head, n_alias, n_link)))
-                            fprintf(stderr, "Failed to add entry\n");
-                        else
-                        {
-                            printf("Successfully added entry.\n");
-                            changes_saved = false;
-                        }
+                        printf("Successfully added entry.\n");
+                        changes_saved = false;
                     }
-                    else if (command_args < 2)
-                        printf("Too few arguments for command \"%s\".\n", command);
-                    else
-                        printf("Too many arguments for command \"%s\".\n", command);
-                }
-                else if (strcmp(command, "show") == 0)
-                {
-                    if (command_args == 1)
-                        show_link(head, n_alias);
-                    else if (command_args < 1)
-                        printf("Too few arguments for command \"%s\".\n", command);
-                    else
-                        printf("Too many arguments for command \"%s\".\n", command);
-                }
-                else if (strcmp(command, "list") == 0)
-                {
-                    if (command_args == 0)
-                        print_all_aliases(head);
-                    else
-                        printf("Too many arguments for command \"%s\".\n", command);
-                }
-                else if (strcmp(command, "delete") == 0)
-                {
-                    if (command_args == 1)
+                    break;
+                case SHOW:
+                    show_link(head, n_alias);
+                    break;
+                case LIST:
+                    print_all_aliases(head);
+                    break;
+                case DELETE:
+                    if (delete_entry(&head, n_alias))
                     {
-                        if (delete_entry(&head, n_alias))
-                        {
-                            printf("Deleted: %s\n", n_alias);
-                            changes_saved = false;
-                        }
-                        else
-                            printf("Did not find \"%s\". Make sure your spelling is correct.\n", n_alias);
+                        printf("Deleted: %s\n", n_alias);
+                        changes_saved = false;
                     }
-                    else if (command_args < 2)
-                        printf("Too few arguments for command \"%s\".\n", command);
                     else
-                        printf("Too many arguments for command \"%s\".\n", command);
-                }
-                else if (strcmp(command, "help") == 0)
-                {
-                    if (command_args == 0)
-                        print_commands();
-                    else
-                        printf("Too many arguments for command \"%s\".\n", command);
-                }
-                else
+                        printf("Did not find \"%s\". Make sure your spelling is correct.\n", n_alias);
+                    break;
+                case HELP:
+                    print_commands();
+                    break;
+                case UNKNOWN:
                     printf("Unknown command. Type \"help\" to list available commands\n");
+                    break;
+                case TOO_FEW_ARGS:
+                    printf("Too few arguments for command \"%s\".\n", command);
+                    break;
+                case TOO_MANY_ARGS:
+                    printf("Too many arguments for command \"%s\".\n", command);
+                    break;
+                }
             }
         }
     }
@@ -405,7 +387,7 @@ int parse_input(char *input, char *command, char *alias, char *link)
                 if (validate_arg_len(input_ptr, arg_count))
                 {
                     arg_count++;
-                    strcpy(alias, input_ptr);
+                    strcpy(link, input_ptr);
                     break;
                 }
                 else
@@ -449,53 +431,53 @@ int validate_command(char *command, int arg_count)
     if (strcmp(command, "quit") == 0)
     {
         if (arg_count == 0)
-            return 1;
+            return QUIT;
         else
-            return -1;
+            return TOO_MANY_ARGS;
     }
     else if (strcmp(command, "add") == 0)
     {
         if (arg_count == 2)
-            return 2;
+            return ADD;
         else if (arg_count < 2)
-            return 0;
+            return TOO_FEW_ARGS;
         else
-            return -1;
+            return TOO_MANY_ARGS;
     }
     else if (strcmp(command, "show") == 0)
     {
         if (arg_count == 1)
-            return 3;
+            return SHOW;
         else if (arg_count < 1)
-            return 0;
+            return TOO_FEW_ARGS;
         else
-            return -1;
+            return TOO_MANY_ARGS;
     }
     else if (strcmp(command, "list") == 0)
     {
         if (arg_count == 0)
-            return 4;
+            return LIST;
         else
-            return -1;
+            return TOO_MANY_ARGS;
     }
     else if (strcmp(command, "delete") == 0)
     {
         if (arg_count == 1)
-            return 5;
+            return DELETE;
         else if (arg_count < 2)
-            return 0;
+            return TOO_FEW_ARGS;
         else
-            return -1;
+            return TOO_MANY_ARGS;
     }
     else if (strcmp(command, "help") == 0)
     {
         if (arg_count == 0)
-            return 6;
+            return HELP;
         else
-            return -1;
+            return TOO_MANY_ARGS;
     }
     else
-        return -2;
+        return UNKNOWN;
 }
 
 bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *alias, char *link)
