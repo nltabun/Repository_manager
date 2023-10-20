@@ -8,10 +8,9 @@
 #define ALIAS_MAX 130
 #define LINK_MAX 256
 #define LINE_MAX (ALIAS_MAX + LINK_MAX)
-#define FILE_NAME_MAX 96
 #define CMD_MAX 8
 #define INPUT_MAX LINK_MAX // Should be atleast equivalent to highest max
-#define DEFAULT_FILE_NAME "repositories.csv"
+#define FILE_NAME "repositories.csv"
 #define HEADER "Alias,Link"
 #define ENTRY_FMT "%s,%s"
 #define ENTRY_SCAN_FMT "%[^,],%s"
@@ -51,7 +50,6 @@ void print_commands();
 int main(int argc, char const *argv[])
 {
     FILE *file_ptr;
-    char file_name[FILE_NAME_MAX] = DEFAULT_FILE_NAME;
     char line[LINE_MAX];
     bool quit = false;
     RepositoryEntry *head = NULL;
@@ -66,26 +64,26 @@ int main(int argc, char const *argv[])
 
     // Init starts
     // Check if file exists and if it doesn't, try to create it
-    if (!(does_file_exist(file_ptr, file_name)))
+    if (!(does_file_exist(file_ptr, FILE_NAME)))
     {
-        printf("File %s doesn't seem to exist. Attempting to create it..\n", file_name);
-        if (create_file(file_ptr, file_name, ENTRY_FMT))
+        printf("File %s doesn't seem to exist. Attempting to create it..\n", FILE_NAME);
+        if (create_file(file_ptr, FILE_NAME, ENTRY_FMT))
         {
-            printf("Successfully created file %s\n", file_name);
+            printf("Successfully created file %s\n", FILE_NAME);
             changes_saved = true;
         }
         else
         {
-            fprintf(stderr, "Failed to create file %s. Can not continue. Exiting..\n", file_name);
+            fprintf(stderr, "Failed to create file %s. Can not continue. Exiting..\n", FILE_NAME);
             return EXIT_FAILURE;
         }
     }
     else
     {
-        printf("File %s found.\n", file_name);
+        printf("File %s found.\n", FILE_NAME);
         changes_saved = true;
 
-        file_ptr = fopen(file_name, "r");
+        file_ptr = fopen(FILE_NAME, "r");
 
         // Check header TODO: Handle better
         if (!(verify_line_from_file(file_ptr, HEADER, LINE_MAX)))
@@ -130,7 +128,7 @@ int main(int argc, char const *argv[])
                 case QUIT:
                     if (!changes_saved)
                     {
-                        file_ptr = fopen(file_name, "w");
+                        file_ptr = fopen(FILE_NAME, "w");
                         if (file_ptr == NULL)
                             fprintf(stderr, "Failed to open file for writing. Unable to save changes.\n");
                         else
