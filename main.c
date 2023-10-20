@@ -48,7 +48,6 @@ void show_link(RepositoryEntry *head, const char *alias);
 void print_all_aliases(RepositoryEntry *head);
 void free_list(RepositoryEntry *head);
 void print_commands();
-bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *alias, char *link);
 
 int main(int argc, char const *argv[])
 {
@@ -190,9 +189,6 @@ int main(int argc, char const *argv[])
             }
         }
     }
-
-    // Run test
-    // test(file_ptr, head, file_name, alias, link);
 
     // Free memory
     free_list(head);
@@ -476,51 +472,4 @@ int validate_command(char *command, int arg_count)
     }
     else
         return UNKNOWN;
-}
-
-bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *alias, char *link)
-{
-    // Test print aliases
-    print_all_aliases(head);
-
-    // Test add
-    if (add_new_entry(&head, alias, link))
-    {
-        printf("Successfully added new entry: %s|%s\n", alias, link);
-    }
-    else
-    {
-        printf("Failed to add new entry: %s|%s\n", alias, link);
-    }
-
-    // Test print aliases
-    print_all_aliases(head);
-
-    // Test write to file
-    file_ptr = fopen(file_name, "w");
-    if (file_ptr == NULL)
-    {
-        printf("Failed to open file for writing.\n");
-        return false;
-    }
-
-    // Test write back to file
-    if (write_to_file(file_ptr, HEADER) == 1)
-    {
-        printf("Successfully wrote header to file.\n");
-    }
-    else
-    {
-        printf("Failed to write to file.\n");
-    }
-
-    int entry_w = write_entries(file_ptr, head);
-    printf("Wrote %d entries to file.\n", entry_w);
-
-    fclose(file_ptr);
-
-    // Test print aliases
-    print_all_aliases(head);
-
-    return true;
 }
