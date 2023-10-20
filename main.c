@@ -28,6 +28,7 @@ bool read_entry(FILE *file_ptr, const char *alias, const char *link);
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link);
 bool delete_entry(RepositoryEntry **head, const char *alias);
 int write_entries(FILE *file_ptr, RepositoryEntry *entry);
+int validate_input(char *input, char *command, char *alias, char *link);
 void show_link(RepositoryEntry *head, const char *alias);
 void print_all_aliases(RepositoryEntry *head);
 void free_list(RepositoryEntry *head);
@@ -102,8 +103,7 @@ int main(int argc, char const *argv[])
         if (fgets(user_input, sizeof(user_input), stdin) != NULL) // TODO: validation in function
         {
             memset(command, 0, sizeof(command)); // Clear command string
-            user_input[strcspn(user_input, "\n")] = 0;
-            command_args = sscanf(user_input, CMD_FMT, command, n_alias, n_link);
+            command_args = validate_input(user_input, command, n_alias, n_link);
             printf("Args: %d\n", command_args);
             printf("Cmd: %s, Alias: %s, Link: %s\n", command, n_alias, n_link);
 
@@ -356,6 +356,17 @@ void print_commands()
         "- delete <alias>\n"
         "- help\n"
         "- quit\n");
+}
+
+int validate_input(char *input, char *command, char *alias, char *link)
+{
+    int arg_count;
+    char temp[LINE_MAX];
+
+    input[strcspn(input, "\n")] = 0;
+    arg_count = sscanf(input, CMD_FMT, command, alias, link);
+
+    return arg_count;
 }
 
 bool test(FILE *file_ptr, RepositoryEntry *head, const char *file_name, char *alias, char *link)
