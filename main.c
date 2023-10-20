@@ -42,7 +42,6 @@ bool delete_entry(RepositoryEntry **head, const char *alias);
 int write_entries(FILE *file_ptr, RepositoryEntry *entry);
 int parse_input(char *input, char *command, char *alias, char *link);
 bool validate_arg_len(char *arg, int arg_type);
-bool validate_arg_count(char *command, int arg_count);
 int validate_command(char *command, int arg_count);
 void show_link(RepositoryEntry *head, const char *alias);
 void print_all_aliases(RepositoryEntry *head);
