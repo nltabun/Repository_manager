@@ -274,20 +274,40 @@ bool delete_entry(RepositoryEntry **head, const char *alias)
 void show_link(RepositoryEntry *head, const char *alias)
 {
     RepositoryEntry *current = head;
-    if (current == NULL)
-        printf("Entry list is empty.\n");
+    bool show_all = false;
 
+    if (current == NULL)
+    {
+        printf("Entry list is empty.\n");
+        return;
+    }
+
+    if (strcmp("all", alias) == 0)
+    {
+        show_all = true;
+        printf("Showing links for all aliases:\n");
+    }
+    else
+    {
+        printf("Searching for %s:\n", alias);
+    }
+    
     while (current != NULL)
     {
-        if (strcmp(current->alias, alias) == 0)
+        if (show_all)
         {
-            printf("%s: %s\n", alias, current->link);
+            printf("%s: %s\n", current->alias, current->link);
+        }
+        else if (strcmp(current->alias, alias) == 0)
+        {
+            printf("%s: %s\n", current->alias, current->link);
             return;
         }
         current = current->next;
     }
 
-    printf("Could not find \"%s\". Make sure your spelling is correct.\n", alias);
+    if (!show_all)
+        printf("Could not find \"%s\". Make sure your spelling is correct.\n", alias);
 }
 
 int write_entries(FILE *file_ptr, RepositoryEntry *entry)
