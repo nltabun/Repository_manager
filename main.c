@@ -132,21 +132,19 @@ int main(int argc, char const *argv[])
                 case QUIT:
                     if (!changes_saved)
                     {
-
                         file_ptr = fopen(file_name, "w");
                         if (file_ptr == NULL)
+                            fprintf(stderr, "Failed to open file for writing. Unable to save changes.\n");
+                        else
                         {
-                            fprintf(stderr, "Failed to open file for writing.\n");
-                            return EXIT_FAILURE; // TODO: Maybe not?
+                            if (!(write_to_file(file_ptr, HEADER) == 1))
+                                fprintf(stderr, "Failed to write header to file.\n");
+
+                            entry_w = write_entries(file_ptr, head);
+                            printf("Wrote %d entries to file.\n", entry_w);
+
+                            fclose(file_ptr);
                         }
-
-                        if (!(write_to_file(file_ptr, HEADER) == 1))
-                            fprintf(stderr, "Failed to write header to file.\n");
-
-                        entry_w = write_entries(file_ptr, head);
-                        printf("Wrote %d entries to file.\n", entry_w);
-
-                        fclose(file_ptr);
                     }
 
                     printf("Quitting..\n");
