@@ -61,7 +61,7 @@ int main(int argc, char const *argv[])
     char command[CMD_MAX];
     int command_args;
     bool changes_saved;
-    int entry_w;
+    int write_count;
     int execute_cmd;
 
     // Init starts
@@ -138,8 +138,8 @@ int main(int argc, char const *argv[])
                             if (!(write_to_file(file_ptr, HEADER) == 1))
                                 fprintf(stderr, "Failed to write header to file.\n");
 
-                            entry_w = write_entries(file_ptr, head);
-                            printf("Wrote %d entries to file.\n", entry_w);
+                            write_count = write_entries(file_ptr, head);
+                            printf("Wrote %d entries to file.\n", write_count);
 
                             fclose(file_ptr);
                         }
@@ -278,7 +278,7 @@ void show_link(RepositoryEntry *head, const char *alias)
 
     if (current == NULL)
     {
-        printf("Entry list is empty.\n");
+        printf("Repository list is empty.\n");
         return;
     }
 
@@ -289,7 +289,7 @@ void show_link(RepositoryEntry *head, const char *alias)
     }
     else
     {
-        printf("Searching for %s:\n", alias);
+        printf("Showing link for %s:\n", alias);
     }
     
     while (current != NULL)
@@ -331,7 +331,7 @@ int write_entries(FILE *file_ptr, RepositoryEntry *entry)
 void print_all_aliases(RepositoryEntry *head)
 {
     RepositoryEntry *current = head;
-    printf("Stored aliases:\n");
+    printf("Showing all aliases:\n");
     while (current != NULL)
     {
         printf("- %s\n", current->alias);
