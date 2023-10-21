@@ -35,7 +35,7 @@ typedef struct RepositoryEntry
     struct RepositoryEntry *next;
 } RepositoryEntry;
 
-bool read_entry(FILE *file_ptr, const char *alias, const char *link);
+bool read_entry(FILE *file_ptr, char *alias, char *link);
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link);
 bool delete_entry(RepositoryEntry **head, const char *alias);
 int write_entries(FILE *file_ptr, RepositoryEntry *entry);
@@ -45,22 +45,21 @@ int validate_command(char *command, int arg_count);
 void show_link(RepositoryEntry *head, const char *alias);
 void print_all_aliases(RepositoryEntry *head);
 void free_list(RepositoryEntry *head);
-void print_commands();
+void print_commands(void);
 
-int main(int argc, char const *argv[])
+int main(void)
 {
-    FILE *file_ptr;
-    char line[LINE_MAX];
-    bool quit = false;
-    RepositoryEntry *head = NULL;
     char user_input[INPUT_MAX];
     char n_alias[ALIAS_MAX];
     char n_link[LINK_MAX];
     char command[CMD_MAX];
     int command_args;
-    bool changes_saved;
     int write_count;
     int execute_cmd;
+    bool changes_saved;
+    bool quit = false;
+    FILE *file_ptr = NULL;
+    RepositoryEntry *head = NULL;
 
     // Init starts
     /* Check if file exists and if it doesn't, try to create it.
@@ -68,7 +67,7 @@ int main(int argc, char const *argv[])
     if (!(does_file_exist(file_ptr, FILE_NAME)))
     {
         printf("File %s doesn't seem to exist. Attempting to create it..\n", FILE_NAME);
-        if (create_file(file_ptr, FILE_NAME, ENTRY_FMT))
+        if (create_file(file_ptr, FILE_NAME))
         {
             printf("Successfully created file %s\n", FILE_NAME);
             changes_saved = true;
@@ -201,8 +200,7 @@ int main(int argc, char const *argv[])
 }
 
 // Read entry from file and add it to list
-// TODO: add rigorous checking for invalid readings.
-bool read_entry(FILE *file_ptr, const char *alias, const char *link)
+bool read_entry(FILE *file_ptr, char *alias, char *link)
 {
     char read_line[LINE_MAX];
 
@@ -356,7 +354,7 @@ void free_list(RepositoryEntry *head)
     }
 }
 
-void print_commands()
+void print_commands(void)
 {
     printf(
         "Available commands:\n"

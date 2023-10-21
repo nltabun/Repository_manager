@@ -57,6 +57,6 @@ int verify_line_from_file(FILE *file_ptr, const char *correct_line, const int li
     line[strcspn(line, "\n")] = 0;
     if (strcmp(line, correct_line) != 0)
         return 0;
-    
+
     return 1;
 }
