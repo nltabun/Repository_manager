@@ -199,20 +199,23 @@ int main(void)
     return 0;
 }
 
-// Read entry from file and add it to list
+// Function to read an entry from the file 
 bool read_entry(FILE *file_ptr, char *alias, char *link)
 {
     char read_line[LINE_MAX];
 
+    // Read a line from the file
     if (fgets(read_line, sizeof(read_line), file_ptr) == NULL)
         return false;
 
+    // Parse the line to extract alias and link
     if (sscanf(read_line, ENTRY_SCAN_FMT, alias, link) != 2)
         return false;
 
     return true;
 }
 
+// Function to add a new entry to the linked list
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
 {
     // Try to create a new entry
@@ -230,11 +233,13 @@ bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
     // Add entry to the end of the linked list
     if (*head == NULL)
     {
+        // If the list is empty, set the new entry as the head
         *head = new_entry;
         new_entry->next = NULL;
     }
     else
     {
+        // Find the end of the list and append the new entry
         while (*head != NULL)
             head = &(*head)->next;
 
@@ -245,6 +250,8 @@ bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
     return true;
 }
 
+
+// Function to delete an entry from the linked list
 bool delete_entry(RepositoryEntry **head, const char *alias)
 {
     if (!head || !(*head))
@@ -253,12 +260,14 @@ bool delete_entry(RepositoryEntry **head, const char *alias)
     RepositoryEntry *temp = *head;
     RepositoryEntry *prev = NULL;
 
+    // Traverse the list to find the entry with given alias
     while (strcmp(temp->alias, alias) != 0 && temp->next != NULL)
     {
         prev = temp;
         temp = temp->next;
     }
 
+    // If the entry with the given alias is found
     if (strcmp(temp->alias, alias) == 0)
     {
         if (prev)
@@ -271,7 +280,7 @@ bool delete_entry(RepositoryEntry **head, const char *alias)
         return true;
     }
 
-    return false;
+    return false; // Entry with given alias not found
 }
 
 void show_link(RepositoryEntry *head, const char *alias)
