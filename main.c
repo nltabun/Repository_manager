@@ -366,6 +366,14 @@ int parse_input(char *input, char *command, char *alias, char *link)
     int arg_count = -1;
     char *input_ptr;
 
+    if (strchr(input, '\n') == NULL)
+    {
+        fprintf(stderr, "Input contains too many characters.\n");
+        while (getchar() != '\n');
+        return arg_count;
+    }
+    
+
     input[strcspn(input, "\n")] = 0;
     input_ptr = strtok(input, " ");
 
