@@ -142,7 +142,7 @@ int main(void)
                             fprintf(stderr, "Failed to open file for writing. Unable to save changes.\n");
                         else
                         {
-                            if (!(write_to_file(file_ptr, HEADER) == 1))
+                            if (write_to_file(file_ptr, HEADER) != 1)
                                 fprintf(stderr, "Failed to write header to file.\n");
 
                             write_count = write_entries(file_ptr, head);
@@ -192,6 +192,7 @@ int main(void)
                     printf("Too many arguments for command \"%s\".\n", command);
                     break;
                 default:
+                    // This should not be possible under normal circumstances
                     fprintf(stderr, "Invalid command operation encountered. Command validation failed.\n");
                     break;
                 }
