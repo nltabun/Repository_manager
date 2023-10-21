@@ -15,7 +15,7 @@
 #define ENTRY_FMT "%s,%s"
 #define ENTRY_SCAN_FMT "%[^,],%s"
 
-enum ExecuteCommand
+enum CommandOperation
 {
     QUIT = 1,
     ADD = 2,
@@ -39,13 +39,13 @@ bool read_entry(FILE *file_ptr, char *alias, char *link);
 bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link);
 bool delete_entry(RepositoryEntry **head, const char *alias);
 int write_entries(FILE *file_ptr, RepositoryEntry *entry);
+void free_list(RepositoryEntry *head);
+void show_link(RepositoryEntry *head, const char *alias);
+void print_all_aliases(RepositoryEntry *head);
+void print_commands(void);
 int parse_input(char *input, char *command, char *alias, char *link);
 bool validate_arg_len(char *arg, int arg_type);
 int validate_command(char *command, int arg_count);
-void show_link(RepositoryEntry *head, const char *alias);
-void print_all_aliases(RepositoryEntry *head);
-void free_list(RepositoryEntry *head);
-void print_commands(void);
 
 int main(void)
 {
@@ -61,9 +61,9 @@ int main(void)
     FILE *file_ptr = NULL;
     RepositoryEntry *head = NULL;
 
-    // Init starts
-    /* Check if file exists and if it doesn't, try to create it.
-    If the file exists then start reading entries from it */
+    // Initialization
+    // Check if file exists and if it doesn't, try to create it.
+    // If the file exists then start reading entries from it
     if (!(does_file_exist(file_ptr, FILE_NAME)))
     {
         printf("File %s doesn't seem to exist. Attempting to create it..\n", FILE_NAME);
@@ -90,7 +90,7 @@ int main(void)
         }
         else
         {
-            // Check header TODO: Handle better
+            // Check if header exists
             if (!(verify_line_from_file(file_ptr, HEADER, LINE_MAX)))
             {
                 fprintf(stderr, "Missing correct header.\n");
@@ -118,20 +118,23 @@ int main(void)
     while (!quit)
     {
         printf("> ");
-        if (fgets(user_input, sizeof(user_input), stdin) != NULL) // TODO: validation in function
+        // Get user input
+        if (fgets(user_input, sizeof(user_input), stdin) != NULL)
         {
             memset(command, 0, sizeof(command)); // Clear command string
+
+            // Parse input and extract command, alias and link
             command_args = parse_input(user_input, command, n_alias, n_link);
-            //printf("Args: %d\n", command_args);
-            //printf("Cmd: %s, Alias: %s, Link: %s\n", command, n_alias, n_link);
 
             if (command_args >= 0)
             {
+                // Validate command and execute corresponding operation
                 execute_cmd = validate_command(command, command_args);
 
                 switch (execute_cmd)
                 {
                 case QUIT:
+                    // If there are unsaved changes then write them to the repository file before ending the program
                     if (!changes_saved)
                     {
                         file_ptr = fopen(FILE_NAME, "w");
@@ -150,7 +153,7 @@ int main(void)
                     }
 
                     printf("Quitting..\n");
-                    quit = true;
+                    quit = true; // Main program loop over
                     break;
                 case ADD:
                     if (!(add_new_entry(&head, n_alias, n_link)))
@@ -252,6 +255,7 @@ bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
 
 
 // Function to delete an entry from the linked list
+// Only deletes the first one (oldest)
 bool delete_entry(RepositoryEntry **head, const char *alias)
 {
     if (!head || !(*head))
@@ -283,63 +287,84 @@ bool delete_entry(RepositoryEntry **head, const char *alias)
     return false; // Entry with given alias not found
 }
 
-void show_link(RepositoryEntry *head, const char *alias)
-{
-    RepositoryEntry *current = head;
-    bool show_all = false;
-
-    if (current == NULL)
-    {
-        printf("Repository list is empty.\n");
-        return;
-    }
-
-    if (strcmp("all", alias) == 0)
-    {
-        show_all = true;
-        printf("Showing links for all aliases:\n");
-    }
-    else
-    {
-        printf("Showing link for %s:\n", alias);
-    }
-
-    while (current != NULL)
-    {
-        if (show_all)
-        {
-            printf("%s: %s\n", current->alias, current->link);
-        }
-        else if (strcmp(current->alias, alias) == 0)
-        {
-            printf("%s: %s\n", current->alias, current->link);
-            return;
-        }
-        current = current->next;
-    }
-
-    if (!show_all)
-        printf("Could not find \"%s\". Make sure your spelling is correct.\n", alias);
-}
-
+// Function to write entries from the linked list to the file
 int write_entries(FILE *file_ptr, RepositoryEntry *entry)
 {
     RepositoryEntry *current = entry;
     int count = 0;
 
+    // Traverse the linked list
     while (current != NULL)
     {
+        // Write the entry to the file using the correct format
         if (write_to_file(file_ptr, ENTRY_FMT, current->alias, current->link) == 1)
-            count++;
+            count++; // Increment count if write successful
         else
             fprintf(stderr, "Failed to write entry to file.\n");
 
         current = current->next;
     }
 
-    return count;
+    return count; // Return the count of successfully written entries
 }
 
+// Function to free memory allocated for the linked list
+void free_list(RepositoryEntry *head)
+{
+    RepositoryEntry *current = head;
+    // Traverse the linked list
+    while (current != NULL)
+    {
+        RepositoryEntry *temp = current;
+        current = current->next;
+        free(temp); // Free memory for each entry node in the linked list
+    }
+}
+
+// Function to display the link(s) associated with an alias or all links
+void show_link(RepositoryEntry *head, const char *alias)
+{
+    RepositoryEntry *current = head;
+    bool show_all = false;
+    bool found = false;
+
+    // Check if the repository list is empty and return early if so.
+    if (current == NULL)
+    {
+        printf("Repository list is empty.\n");
+        return;
+    }
+
+    // Check if the user wants to show links for all aliases or a specific one.
+    if (strcmp("all", alias) == 0)
+    {
+        show_all = true;
+        found = true;
+        printf("Showing links for all aliases:\n");
+    }
+    else
+        printf("Showing link(s) for %s:\n", alias);
+
+    // Traverse the linked list and print link(s) that match provided alias
+    while (current != NULL)
+    {
+        if (show_all)
+            printf("%s: %s\n", current->alias, current->link);
+        else if (strcmp(current->alias, alias) == 0)
+        {
+            printf("%s: %s\n", current->alias, current->link);
+            found = true;
+        }
+
+        current = current->next;
+    }
+
+    // If the alias was not found
+    if (!found)
+        printf("Could not find \"%s\". Make sure your spelling is correct.\n", alias);
+}
+
+// Function to print all aliases in the linked list
 void print_all_aliases(RepositoryEntry *head)
 {
     RepositoryEntry *current = head;
@@ -351,18 +376,7 @@ void print_all_aliases(RepositoryEntry *head)
     }
 }
 
-// Clears list / frees memory
-void free_list(RepositoryEntry *head)
-{
-    RepositoryEntry *current = head;
-    while (current != NULL)
-    {
-        RepositoryEntry *temp = current;
-        current = current->next;
-        free(temp);
-    }
-}
-
+// Function to print all available commands
 void print_commands(void)
 {
     printf(
@@ -375,11 +389,13 @@ void print_commands(void)
         "- quit\n");
 }
 
+// Function to parse user input and extract command, alias and link
 int parse_input(char *input, char *command, char *alias, char *link)
 {
     int arg_count = -1;
     char *input_ptr;
 
+    // Check for input length exceeding the limit
     if (strchr(input, '\n') == NULL)
     {
         fprintf(stderr, "Input contains too many characters.\n");
@@ -394,10 +410,10 @@ int parse_input(char *input, char *command, char *alias, char *link)
     {
         while (input_ptr)
         {
-            //printf("PTR: %s\n", input_ptr);
             switch (arg_count)
             {
             case -1:
+                // Validate and extract command
                 if (validate_arg_len(input_ptr, arg_count))
                 {
                     arg_count++;
@@ -410,6 +426,7 @@ int parse_input(char *input, char *command, char *alias, char *link)
                     return -1;
                 }
             case 0:
+                // Validate and extract alias
                 if (validate_arg_len(input_ptr, arg_count))
                 {
                     arg_count++;
@@ -422,6 +439,7 @@ int parse_input(char *input, char *command, char *alias, char *link)
                     return -1;
                 }
             case 1:
+                // Validate and extract link
                 if (validate_arg_len(input_ptr, arg_count))
                 {
                     arg_count++;
@@ -444,19 +462,21 @@ int parse_input(char *input, char *command, char *alias, char *link)
     return arg_count;
 }
 
+// Function to validate argument length
+// Return false if too long
 bool validate_arg_len(char *arg, int arg_type)
 {
     switch (arg_type)
     {
-    case -1:
+    case -1: // Command
         if (strlen(arg) >= CMD_MAX)
             return false;
         break;
-    case 0:
+    case 0: // Alias
         if (strlen(arg) >= ALIAS_MAX)
             return false;
         break;
-    case 1:
+    case 1: // Link
         if (strlen(arg) >= LINK_MAX)
             return false;
         break;
@@ -467,6 +487,8 @@ bool validate_arg_len(char *arg, int arg_type)
     return true;
 }
 
+// Function to validate the command and its argument count
+// Return value for validated command or error message to run
 int validate_command(char *command, int arg_count)
 {
     if (strcmp(command, "quit") == 0)
