@@ -191,6 +191,9 @@ int main(void)
                 case TOO_MANY_ARGS:
                     printf("Too many arguments for command \"%s\".\n", command);
                     break;
+                default:
+                    fprintf(stderr, "Invalid command operation encountered. Command validation failed.\n");
+                    break;
                 }
             }
         }
