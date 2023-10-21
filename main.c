@@ -9,7 +9,7 @@
 #define LINK_MAX 256
 #define LINE_MAX (ALIAS_MAX + LINK_MAX)
 #define CMD_MAX 8
-#define INPUT_MAX LINK_MAX // Should be atleast equivalent to highest max
+#define INPUT_MAX (CMD_MAX + LINE_MAX) // Should be atleast equivalent to highest max
 #define FILE_NAME "repositories.csv"
 #define HEADER "Alias,Link"
 #define ENTRY_FMT "%s,%s"
@@ -63,7 +63,8 @@ int main(int argc, char const *argv[])
     int execute_cmd;
 
     // Init starts
-    // Check if file exists and if it doesn't, try to create it
+    /* Check if file exists and if it doesn't, try to create it.
+    If the file exists then start reading entries from it */
     if (!(does_file_exist(file_ptr, FILE_NAME)))
     {
         printf("File %s doesn't seem to exist. Attempting to create it..\n", FILE_NAME);
@@ -84,30 +85,36 @@ int main(int argc, char const *argv[])
         changes_saved = true;
 
         file_ptr = fopen(FILE_NAME, "r");
-
-        // Check header TODO: Handle better
-        if (!(verify_line_from_file(file_ptr, HEADER, LINE_MAX)))
+        if (file_ptr == NULL)
         {
-            fprintf(stderr, "Missing correct header.\n");
-            changes_saved = false; // So that header gets added even if no new entries get added/removed.
-            rewind(file_ptr);
+            fprintf(stderr, "Failed to open file %s for reading entries. Existing entries could be lost if you attempt to add/remove entries.\n", FILE_NAME);
         }
-
-        // Read entries from file and populate list
-        while (!feof(file_ptr))
+        else
         {
-            if (read_entry(file_ptr, n_alias, n_link))
+            // Check header TODO: Handle better
+            if (!(verify_line_from_file(file_ptr, HEADER, LINE_MAX)))
             {
-                if (!(add_new_entry(&head, n_alias, n_link)))
-                    fprintf(stderr, "Failed to add entry\n");
+                fprintf(stderr, "Missing correct header.\n");
+                changes_saved = false; // So that header gets added even if no new entries get added/removed.
+                rewind(file_ptr); // First line wasn't a header so back to it
             }
-        }
 
-        fclose(file_ptr);
+            // Read entries from file and populate list
+            while (!feof(file_ptr))
+            {
+                if (read_entry(file_ptr, n_alias, n_link))
+                {
+                    if (!(add_new_entry(&head, n_alias, n_link)))
+                        fprintf(stderr, "Failed to add entry\n");
+                }
+            }
+
+            fclose(file_ptr);
+        }
     }
     // Init ends
 
-    printf("REPOSITORY MANAGER\nType \"help\" to list available commands\n");
+    printf("\nREPOSITORY MANAGER\nType \"help\" to list available commands\n");
     // Main program loop
     while (!quit)
     {
@@ -116,8 +123,8 @@ int main(int argc, char const *argv[])
         {
             memset(command, 0, sizeof(command)); // Clear command string
             command_args = parse_input(user_input, command, n_alias, n_link);
-            printf("Args: %d\n", command_args);
-            printf("Cmd: %s, Alias: %s, Link: %s\n", command, n_alias, n_link);
+            //printf("Args: %d\n", command_args);
+            //printf("Cmd: %s, Alias: %s, Link: %s\n", command, n_alias, n_link);
 
             if (command_args >= 0)
             {
@@ -187,7 +194,7 @@ int main(int argc, char const *argv[])
         }
     }
 
-    // Free memory
+    // Free memory allocated for the list
     free_list(head);
 
     return 0;
@@ -214,7 +221,7 @@ bool add_new_entry(RepositoryEntry **head, const char *alias, const char *link)
     RepositoryEntry *new_entry = (RepositoryEntry *)malloc(sizeof(RepositoryEntry));
     if (!new_entry)
     {
-        fprintf(stderr, "Memory allocation failed.\n");
+        fprintf(stderr, "Memory allocation failed. Could not add new entry\n");
         return false;
     }
 
@@ -289,7 +296,7 @@ void show_link(RepositoryEntry *head, const char *alias)
     {
         printf("Showing link for %s:\n", alias);
     }
-    
+
     while (current != NULL)
     {
         if (show_all)
@@ -372,7 +379,6 @@ int parse_input(char *input, char *command, char *alias, char *link)
         while (getchar() != '\n');
         return arg_count;
     }
-    
 
     input[strcspn(input, "\n")] = 0;
     input_ptr = strtok(input, " ");
@@ -381,7 +387,7 @@ int parse_input(char *input, char *command, char *alias, char *link)
     {
         while (input_ptr)
         {
-            printf("PTR: %s\n", input_ptr);
+            //printf("PTR: %s\n", input_ptr);
             switch (arg_count)
             {
             case -1:
@@ -392,7 +398,10 @@ int parse_input(char *input, char *command, char *alias, char *link)
                     break;
                 }
                 else
+                {
+                    fprintf(stderr, "Command contains too many characters. Check commands with \"help\".\n");
                     return -1;
+                }
             case 0:
                 if (validate_arg_len(input_ptr, arg_count))
                 {
@@ -401,7 +410,10 @@ int parse_input(char *input, char *command, char *alias, char *link)
                     break;
                 }
                 else
+                {
+                    fprintf(stderr, "Alias contains too many characters. (Max: %d)\n", ALIAS_MAX - 1);
                     return -1;
+                }
             case 1:
                 if (validate_arg_len(input_ptr, arg_count))
                 {
@@ -410,7 +422,10 @@ int parse_input(char *input, char *command, char *alias, char *link)
                     break;
                 }
                 else
+                {
+                    fprintf(stderr, "Link contains too many characters. (Max: %d)\n", LINK_MAX - 1);
                     return -1;
+                }
             default:
                 return 3;
             }
